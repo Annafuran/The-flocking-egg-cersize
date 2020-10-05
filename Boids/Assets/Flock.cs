@@ -5,7 +5,7 @@ using UnityEngine;
 public class Flock : MonoBehaviour
 {
     public FlockAgent agentPrefab;
-    List<FlockAgent> agents = new List<FlockAgent>();
+    public static List<FlockAgent> agents = new List<FlockAgent>();
     public FlockBehavior behavior;
 
     [Range(10, 500)]
@@ -43,13 +43,10 @@ public class Flock : MonoBehaviour
 
         for(int i = 0; i < startingCount; i++)
         {
-            Vector3 test1 = Random.insideUnitSphere * startingCount * AgentDensity;
-            Quaternion test2 = Quaternion.Euler(Vector3.forward * Random.Range(0f, 360f));
-
             FlockAgent newAgent = Instantiate(
                 agentPrefab,
-                test1,
-                test2,
+                Random.insideUnitSphere * startingCount * AgentDensity,
+                Quaternion.Euler(Vector3.forward * Random.Range(0f, 360f)),
                 transform
                 );
 
@@ -62,6 +59,7 @@ public class Flock : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
         foreach(FlockAgent agent in agents)
         {
             List<Transform> context = GetNearbyObjects(agent);
@@ -96,5 +94,10 @@ public class Flock : MonoBehaviour
 
         return context;
 
+    }
+
+    public static List<FlockAgent> GetAgentList()
+    {
+        return agents;
     }
 }

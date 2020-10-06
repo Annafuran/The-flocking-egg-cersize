@@ -7,13 +7,16 @@ public class EnemyBehavior : MonoBehaviour
     public List<FlockAgent> agents = new List<FlockAgent>();
     float enemyAngleDir =180f; //Angle of cone that enemy can look. 
     float dirToAgent;
-    public float speed = 1.0f; //speed of our enemy
+    public float speed = 7.0f; //speed of our enemy
+    public float targetVisionLength = 15.0f;
     bool targetFound = false; //If we have found a target;
     FlockAgent target; //Our target
     private Vector3 movementDirection;
     private Vector3 movementPerSecond;
     private float latestDirectionChangeTime;
-    private float directionChangeTime = 3.0f;
+    public float directionChangeTime = 2.0f;
+    Vector3 prevPosition = Vector3.zero;
+
 
     void Start()
     {
@@ -28,6 +31,15 @@ public class EnemyBehavior : MonoBehaviour
     void Update()
     {
         agents = Flock.GetAgentList();
+
+        if (prevPosition != Vector3.zero)
+        {
+            Vector3 movementDir = transform.position - prevPosition;
+            movementDir = new Vector3(movementDir.x, 0.0f, movementDir.z);
+            transform.forward = new Vector3(movementDir.x, 0.0f, movementDir.z);
+        }
+        prevPosition = transform.position;
+        
         //Find closest chicken
         if (!targetFound)
         {
@@ -43,7 +55,7 @@ public class EnemyBehavior : MonoBehaviour
                     // Beräkna vinkeln mellan vargens blick och riktningen till hönan
                     float viewAngle = Vector3.Angle(this.transform.forward, agent.transform.position);
 
-                   if(viewAngle < (enemyAngleDir / 2) && dirToAgent < 10)
+                   if(viewAngle < (enemyAngleDir / 2) && dirToAgent < targetVisionLength)
                     {
                         target = agent;
                         targetFound = true;
@@ -55,7 +67,7 @@ public class EnemyBehavior : MonoBehaviour
                     float viewAngle = Vector3.Angle(this.transform.forward, agent.transform.position);
 
                     //If the hen is closer and inside viewangle
-                    if(temp < dirToAgent && viewAngle < (enemyAngleDir / 2) && temp < 10)
+                    if(temp < dirToAgent && viewAngle < (enemyAngleDir / 2) && temp < targetVisionLength)
                     {
                         dirToAgent = temp;
                         target = agent;
@@ -67,15 +79,8 @@ public class EnemyBehavior : MonoBehaviour
         else
         {
             HuntingMovement(target, agents);
-            //RandomMovement();
-        }
-
-
-        
-
-
-
        
+        }  
     }
 
     //Create random direction vector. 
@@ -84,6 +89,7 @@ public class EnemyBehavior : MonoBehaviour
         movementDirection = new Vector3(Random.Range(-1.0f, 1.0f), 0.0f, Random.Range(-1.0f, 1.0f)).normalized;
         movementPerSecond = movementDirection * speed;
     }
+
 
 
     //If no chicken is found, move randomly
@@ -107,13 +113,11 @@ public class EnemyBehavior : MonoBehaviour
     {
         float step = speed * Time.deltaTime;
 
-        transform.position = Vector3.MoveTowards(transform.position, agent.transform.position, step);
-        transform.forward = new Vector3(transform.position.x, 0.0f, transform.position.z);
+        Vector3 MoveTowards = Vector3.MoveTowards(transform.position, agent.transform.position, step);
+        transform.position = new Vector3(MoveTowards.x, 0.0f, MoveTowards.z);;
 
-        if (Vector3.Distance(transform.position, agent.transform.position) < 5.0f)
+        if (Vector3.Distance(transform.position, agent.transform.position) < 3.0f)
         {
-            Debug.Log("HEJJJJJ");
-            Debug.Log(Vector3.Distance(transform.position, agent.transform.position));
             AttackMovement(agent, agents);
         }
     }
@@ -122,6 +126,7 @@ public class EnemyBehavior : MonoBehaviour
     void AttackMovement(FlockAgent agent, List<FlockAgent> agents)
     {
         Destroy(agent.gameObject);
+        agents.Remove(agent);
         targetFound = false;
     }
 

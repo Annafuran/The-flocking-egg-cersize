@@ -7,6 +7,7 @@ public class Flock : MonoBehaviour
     public FlockAgent agentPrefab;
     public static List<FlockAgent> agents = new List<FlockAgent>();
     public FlockBehavior behavior;
+    public List<BoxCollider> crashAndTurn = new List<BoxCollider>();
 
     [Range(10, 500)]
     public int startingCount = 10;
@@ -39,7 +40,7 @@ public class Flock : MonoBehaviour
     {
         squareMaxSpeed = maxSpeed * maxSpeed;
         squareNeighborRadius = neighborRadius * neighborRadius;
-        squareAvoidanceRadius = squareNeighborRadius * avoidanceRadiusMultiplier * avoidanceRadiusMultiplier; 
+        squareAvoidanceRadius = squareNeighborRadius * avoidanceRadiusMultiplier * avoidanceRadiusMultiplier;
 
         for(int i = 0; i < startingCount; i++)
         {
@@ -59,15 +60,23 @@ public class Flock : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+      
 
+        
         foreach(FlockAgent agent in agents)
         {
             List<Transform> context = GetNearbyObjects(agent);
             Vector3 move = behavior.CalculateMove(agent, context, this);
             move *= driveFactor;
 
+      
+            if (agent.transform.position.y != 0.6f)
+            {
+                agent.transform.position = new Vector3(agent.transform.position.x, 0.6f, agent.transform.position.z);
+            }
+
             //if the agent moves too fast
-            if(move.sqrMagnitude > squareMaxSpeed)
+            if (move.sqrMagnitude > squareMaxSpeed)
             {
                 //Vector3 temp_1 = new Vector3(move.normalized.x, 0.0f, move.normalized.z) *maxSpeed;
                 move = move.normalized*maxSpeed;
@@ -78,6 +87,8 @@ public class Flock : MonoBehaviour
             agent.Move(move);
         }
     }
+
+ 
 
     List<Transform> GetNearbyObjects(FlockAgent agent)
     {

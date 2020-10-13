@@ -12,30 +12,30 @@ public class EnemyBehavior : MonoBehaviour
     public float targetVisionLength = 15.0f;
     bool targetFound = false; //If we have found a target;
     FlockAgent target; //Our target
-    private Vector3 movementDirection;
-    private Vector3 movementPerSecond;
+    Vector3 velocity;
     private float latestDirectionChangeTime;
     public float directionChangeTime = 2.0f;
     Vector3 prevPosition = Vector3.zero;
     public Animator anim;
     bool isDogSpawned = false;
 
-    //button
-    
 
+    public float curHealth = 0;
+    public float maxHealth = 100;
 
-    /*
-*/
-    
+    public HealthBar healthBar;
+    public GameObject HP;
 
     void Start()
     {
         gameObject.SetActive(false);
+        HP.GetComponent<GameObject>();
+        HP.SetActive(false);
         agents = Flock.GetAgentList();
         latestDirectionChangeTime = 0f;
         NewMovementVector();
-        anim = GetComponent<Animator>();
-
+        curHealth = maxHealth;
+        anim = GetComponentInChildren<Animator>();
     }
 
     // Update is called once per frame
@@ -43,16 +43,21 @@ public class EnemyBehavior : MonoBehaviour
     {
         agents = Flock.GetAgentList();
 
-        if (transform.position.y != 0.6f)
+        if (curHealth > 0) {
+            curHealth -= 0.01f;
+            healthBar.SetHealth(curHealth);
+        }
+            
+
+        if (transform.position.y != 0.2f)
         {
-            transform.position = new Vector3(transform.position.x, 0.6f, transform.position.z);
+            transform.position = new Vector3(transform.position.x, 0.2f, transform.position.z);
         }
 
-        if (prevPosition != Vector3.zero)
+        if (prevPosition != Vector3.zero && targetFound)
         {
             Vector3 movementDir = transform.position - prevPosition;
             movementDir = new Vector3(movementDir.x, 0.0f, movementDir.z);
-            //transform.forward = new Vector3(movementDir.x, 0.0f, movementDir.z);
             
             Move(movementDir);
             anim.SetInteger("Walk", 1);
@@ -64,9 +69,9 @@ public class EnemyBehavior : MonoBehaviour
         if (!targetFound)
         {
             RandomMovement();
+
             foreach (FlockAgent agent in agents)
             {
-  
                 if (agent == agents[0])
                 {
                     //Beräkna längden till hönan
@@ -96,13 +101,17 @@ public class EnemyBehavior : MonoBehaviour
                 }
             }
         }
-        else
+        else if(curHealth < 50 && targetFound)
         {
             HuntingMovement(target, agents); 
-        }  
+        }
+        else
+        {
+            RandomMovement();
+        }
     }
 
-    void Move(Vector3 velocity)
+    void Move (Vector3 velocity)
     {
         if (velocity.magnitude < Mathf.Epsilon)
             return;
@@ -116,6 +125,7 @@ public class EnemyBehavior : MonoBehaviour
         // If the raycast hit something, info about the intersection is contained in 'hit'
         if (Physics.Raycast(transform.position, velocity.normalized, out var hit, moveDistance))
         {
+
             // Reflect the velocity against the hit normal to get the direction the agent should move from the wall
             Vector3 reflectedDirection = Vector3.Reflect(velocity, hit.normal).normalized;
             // Move the agent to the collision point (with a small offset to prevent floating point precision issues)
@@ -137,8 +147,8 @@ public class EnemyBehavior : MonoBehaviour
     //Create random direction vector. 
     void NewMovementVector()
     {
-        movementDirection = new Vector3(Random.Range(-1.0f, 1.0f), 0.0f, Random.Range(-1.0f, 1.0f)).normalized;
-        movementPerSecond = movementDirection * speed;
+        var newDir = Quaternion.AngleAxis(Random.Range(0f, 360f), Vector3.up) * Vector3.forward;
+        transform.rotation = Quaternion.LookRotation(newDir, Vector3.up);
     }
 
 
@@ -146,31 +156,24 @@ public class EnemyBehavior : MonoBehaviour
     //If no chicken is found, move randomly
     void RandomMovement()
     {
-        Debug.Log("Random");
+        anim.SetInteger("Walk", 1);
 
-        if(Time.time - latestDirectionChangeTime > directionChangeTime)
+        if (Time.time - latestDirectionChangeTime > directionChangeTime)
         {
             latestDirectionChangeTime = Time.time;
             NewMovementVector();
         }
 
-        /* transform.position = new Vector3(
-             transform.position.x + (movementPerSecond.x * Time.deltaTime),
-             0.0f,
-             transform.position.z + (movementPerSecond.z * Time.deltaTime));*/
-
-        Move(movementPerSecond);
-
+        Move(transform.forward * speed);
     }
 
     //If chicken is found, hunt
     void HuntingMovement(FlockAgent agent, List<FlockAgent> agents)
     {
-        Debug.Log("HUNT");
         float step = 5 * Time.deltaTime;
 
         Vector3 MoveTowards = Vector3.MoveTowards(transform.position, agent.transform.position, step);
-        transform.position = new Vector3(MoveTowards.x, 0.6f, MoveTowards.z);
+        transform.position = new Vector3(MoveTowards.x, 0.2f, MoveTowards.z);
         anim.SetInteger("Walk", 1);
 
         if (Vector3.Distance(transform.position, agent.transform.position) < 3.0f && targetFound)
@@ -182,14 +185,13 @@ public class EnemyBehavior : MonoBehaviour
     //If chicken is close, attack
     void AttackMovement(FlockAgent agent, List<FlockAgent> agents)
     {
-        Debug.Log("Attack");
         anim.SetInteger("Walk", 1);
-        //audio.Play();
         SoundManagerScript.PlaySound("enemyEat");
         Destroy(agent.gameObject);
         agents.Remove(agent);
         targetFound = false;
-    
+        curHealth = maxHealth;
+        healthBar.SetHealth(curHealth);
     }
 
     //Spawn the dog
@@ -197,10 +199,12 @@ public class EnemyBehavior : MonoBehaviour
         if (isDogSpawned == false)
         {
             gameObject.SetActive(true);
+            HP.SetActive(true);
             isDogSpawned = true;
         }
         else {
             gameObject.SetActive(false);
+            HP.SetActive(false);
             isDogSpawned = false;
         }
     }

@@ -9,7 +9,7 @@ public class Flock : MonoBehaviour
     public FlockBehavior behavior;
     public List<BoxCollider> crashAndTurn = new List<BoxCollider>();
 
-    [Range(10, 500)]
+    [Range(0, 500)]
     public float startingCount = 10.0f;
     const float AgentDensity = 0.1f;
 
@@ -111,11 +111,9 @@ public class Flock : MonoBehaviour
     }
 
     // For sliders
-
     public void AdjustStartingCount(float newStartCount)
     {
         startingCount = newStartCount;
-
     }
 
     public void changeSpeed(float newMaxSpeed) {

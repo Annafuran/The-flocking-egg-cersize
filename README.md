@@ -9,6 +9,6 @@ The main focus was to learn the user how the different steering rules affect the
 
 The project was implemented using Unity. 
 
-**Final Screencast**
+**Final Result**
 
-Project Screencast: [Click here](https://www.youtube.com/watch?v=IDJjsumh6Uw)
+Project Result: [Click here](https://www.youtube.com/watch?v=IDJjsumh6Uw)

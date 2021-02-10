@@ -1,4 +1,4 @@
-# Boids
+# The flocking egg-cersize
 
 A project for the course TNM095, AI for interactive media at Linköping University.
 
